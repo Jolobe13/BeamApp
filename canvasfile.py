@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap import Style
 from ttkbootstrap.scrolled import ScrolledText
-from calcular import calcularclass
+from dibujar import calcularclass
 from ttkbootstrap.constants import *
 from tkinter import PhotoImage
 from tkinter import Canvas
