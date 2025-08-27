@@ -1,19 +1,1 @@
-Ingrese valor del ángulo en grados (ej: 0,45,90) de...
-    alfa1 ==0
-    alfa2 ==0
-
-Ingrese tipo de apoyo (ej: 1,2,3,4) de...
-1:apoyo empotrado(theta=0,w=U=0)    2:apoyo movil(M=0)
-3:apoyo fijo(M=0,w=U=0)    4:sin apoyo(M=0)
-
-    apoyo1 ==3
-    apoyo2 ==3
-    apoyo3 ==4
-Ingrese tipo de carga qz (ej: 0,q,ql,sin(alfa1) de...
-    qz1==q*x/L
-    qz2==q*x/L
-Ingrese tipo de carga qx (ej: 0,q,ql,cos(alfa1) de...
-    qx1==0
-    qx2==0
-¿hay alguna carga puntual?(s/n) ==n
 
