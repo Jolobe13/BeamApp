@@ -14,7 +14,6 @@ import numpy as np
 from sympy.parsing.sympy_parser import parse_expr
 class VigaSolverApp:
     def __init__(self, root):
-
         self.crear_variables()
         self.simbolos_conocidos = {
             "Q": Symbol("Q"),
@@ -27,102 +26,121 @@ class VigaSolverApp:
         }
         self.root = root
         self.root.title("BeamApp")
-        self.root.geometry("1800x800")
+
         self.style = tb.Style("cosmo")
 
-        # === FRAME PRINCIPAL ===
+        # ===================== TAMAÑO INICIAL =====================
+        self.root.geometry("1200x800")  # tamaño inicial
+        self.root.minsize(800, 600)  # tamaño mínimo
+        self.root.update_idletasks()  # calcula tamaño de todos los widgets
+
+        # ===================== FRAME PRINCIPAL =====================
         self.main_frame = ttk.Frame(root)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
+        self.main_frame.columnconfigure(0, weight=1, uniform="col")
+        self.main_frame.columnconfigure(1, weight=1, uniform="col")
+        self.main_frame.rowconfigure(0, weight=1)
 
-        # Izquierda: Entradas
-        self.left = ttk.Frame(self.main_frame, padding=5)
-        self.left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        font_label = ("Segoe UI", 20)
-        font_entry = ("Segoe UI", 12)
-        #ttk.Label(self.left, text="BEAMApp", font=font_label).pack(side=tk.TOP, anchor="w", pady=5)
+        # ===================== COLUMNA IZQUIERDA =====================
+        self.left = ttk.Frame(self.main_frame, padding=6)
+        self.left.grid(row=0, column=0, sticky="nsew")
+        self.left.rowconfigure(1, weight=1)
+        self.left.columnconfigure(0, weight=1)
 
-        # Derecha: Frame superior con gráfica interactiva
-        self.right_top = ttk.Frame(self.main_frame)
-        self.right_top.pack()
+        ttk.Label(self.left, text="BeamApp", font=("Segoe UI", 14, "bold")).grid(
+            row=0, column=0, sticky="w", pady=(0, 6)
+        )
 
-        #ttk.Label(self.right_top, text="Dibujo de la viga (Interactivo)", font=("Segoe UI", 12, "bold")).pack(pady=(0, 5))
+        self.solution_text = ScrolledText(self.left, wrap=tk.WORD, font=("Courier New", 10))
+        self.solution_text.grid(row=1, column=0, sticky="nsew", padx=2, pady=2)
+        try:
+            self.solution_text.insert(tk.END, f"{self.pregunta_actual}")
+        except Exception:
+            pass
+        self.solution_text.config(state=tk.DISABLED)
 
-        # Crear figura de arriba (interactiva)
-        self.figure_canvas, self.ax_canvas = plt.subplots(figsize=(5, 5))
+        # Entrada + botones
+        self.left_bottom = ttk.Frame(self.left, padding=4)
+        self.left_bottom.grid(row=2, column=0, sticky="ew", pady=(6, 0))
+        self.left_bottom.columnconfigure(0, weight=1)
 
-        #self.ax_canvas.set_title("Ejemplo barras simples 3 tramos con alpha=45º")
+        self.n_entry = ttk.Entry(self.left_bottom, font=("Segoe UI", 12))
+        self.n_entry.grid(row=0, column=0, sticky="ew", padx=(0, 6), pady=4)
+        self.n_entry.insert(0, "Responda aquí...")
+
+        def al_entrar(event):
+            if self.n_entry.get() == "Responda aquí...":
+                self.n_entry.delete(0, "end")
+
+        def al_salir(event):
+            if not self.n_entry.get().strip():
+                self.n_entry.insert(0, "Responda aquí...")
+
+        self.n_entry.bind("<FocusIn>", al_entrar)
+        self.n_entry.bind("<FocusOut>", al_salir)
+        self.n_entry.bind("<Return>", self.on_responder)
+
+        self.boton_responder = tk.Button(
+            self.left_bottom, text="Responder", command=self.on_responder, width=12, height=2
+        )
+        self.boton_responder.grid(row=0, column=1, padx=(0, 6), pady=4, sticky="ew")
+
+        self.boton_ayuda = tk.Button(
+            self.left_bottom, text="Ayuda", command=self.ayuda, width=12, height=2
+        )
+        self.boton_ayuda.grid(row=0, column=2, padx=(0, 6), pady=4, sticky="ew")
+
+        self.boton_reiniciar = tk.Button(
+            self.left_bottom, text="Reiniciar", command=self.reiniciar, width=12, height=2
+        )
+        self.boton_reiniciar.grid(row=0, column=3, padx=(0, 0), pady=4, sticky="ew")
+
+        # ===================== COLUMNA DERECHA =====================
+        self.right = ttk.Frame(self.main_frame, padding=6)
+        self.right.grid(row=0, column=1, sticky="nsew")
+        self.right.rowconfigure(0, weight=1, uniform="row")
+        self.right.rowconfigure(1, weight=1, uniform="row")
+        self.right.columnconfigure(0, weight=1)
+
+        # --- Gráfica interactiva arriba ---
+        self.right_top = ttk.Frame(self.right, width=600, height=400)
+        self.right_top.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+        self.right_top.grid_propagate(False)  # evita que el frame cambie de tamaño por Matplotlib
+
+        self.figure_canvas, self.ax_canvas = plt.subplots(figsize=(1, 1), constrained_layout=True)
         self.ax_canvas.grid(True)
-        #self.ax_canvas.plot([0, 1, 2, 3], [0, 1, 2, 3], marker='o')  # ejemplo
         self.ax_canvas.set_xlim(-0.5, 3.5)
         self.ax_canvas.set_ylim(-0.5, 3.5)
         self.ax_canvas.set_autoscale_on(False)
         self.ax_canvas.set_aspect('equal', adjustable='box')
+        self.ax_canvas.set_title("Problema a resolver\n", fontsize=9)
 
-        # Canvas de Matplotlib
         self.canvas_top = FigureCanvasTkAgg(self.figure_canvas, master=self.right_top)
-        self.canvas_top.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas_top.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        # Barra de herramientas para zoom/pan con ratón
-        #self.toolbar_top = NavigationToolbar2Tk(self.canvas_top, self.right_top)
-        #self.toolbar_top.update()
-        # --- Eventos para zoom y pan ---
-        # Zoom con la rueda
-        self.figure_canvas.canvas.mpl_connect("scroll_event", self.on_scroll)
-        # Pan con botón derecho
+        # Variables y eventos para pan/zoom
         self.dragging = False
         self.last_event = None
-        self.figure_canvas.canvas.mpl_connect("button_press_event", self.on_press)
-        self.figure_canvas.canvas.mpl_connect("button_release_event", self.on_release)
-        self.figure_canvas.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        self.canvas_top.mpl_connect("scroll_event", self.on_scroll)
+        self.canvas_top.mpl_connect("button_press_event", self.on_press)
+        self.canvas_top.mpl_connect("button_release_event", self.on_release)
+        self.canvas_top.mpl_connect("motion_notify_event", self.on_motion)
 
-        # Derecha: Gráfica de resultados (abajo)
-        self.right_bottom = ttk.Frame(self.main_frame, padding=5)
-        self.right_bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        # --- Gráfica de resultados abajo ---
+        self.right_bottom = ttk.Frame(self.right, width=600, height=400)
+        self.right_bottom.grid(row=1, column=0, sticky="nsew", padx=2, pady=2)
+        self.right_bottom.grid_propagate(False)
 
-        self.figure_graficas, self.ax_graficas = plt.subplots(figsize=(7, 5))
-        self.ax_graficas.set_title("Gráfica de resultados\n",fontsize=9)
+        self.figure_graficas, self.ax_graficas = plt.subplots(figsize=(1, 1), constrained_layout=True)
+        self.ax_graficas.set_title("Gráfica de resultados\n", fontsize=9)
+
         self.chart = FigureCanvasTkAgg(self.figure_graficas, self.right_bottom)
-        self.chart.get_tk_widget().pack(ipady=10)
-
-        # Sección de texto
-        ttk.Label(self.left, text="BeamApp", font=("Segoe UI", 14, "bold")).pack()
-        self.solution_text = ScrolledText(self.left, wrap=tk.WORD, height=25, font=("Courier New", 10))
-        self.solution_text.pack(fill=tk.BOTH, expand=True)
-
-        self.solution_text.insert(tk.END, f"{self.pregunta_actual}")
-        self.solution_text.config(state=tk.DISABLED)
-
-        # Entrada + Botones
-        self.left_bottom = ttk.Frame(self.left, padding=5)
-        self.left_bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        self.n_entry = ttk.Entry(self.left_bottom, font=font_entry)
-        self.n_entry.pack(side=tk.LEFT, fill=tk.X, padx=5, pady=5, expand=True)
-        self.n_entry.insert(0, "Responda aquí...")
-
-        # Eventos para manejar el placeholder
-        def al_entrar(event):
-            if self.n_entry.get() == "Responda aquí...":
-                self.n_entry.delete(0, "end")
-                self.n_entry.config(foreground="black")
-
-        def al_salir(event):
-            if not self.n_entry.get():
-                self.n_entry.insert(0, "Responda aquí...")
-                self.n_entry.config(foreground="grey")
-
-        self.n_entry.bind("<FocusIn>", al_entrar)
-        self.n_entry.bind("<FocusOut>", al_salir)
-
-        # Evento para Enter
-        self.n_entry.bind("<Return>", self.on_responder)
-
-        self.boton_reiniciar = tk.Button(self.left_bottom, text="Reiniciar", command=self.reiniciar, width=20, height=5)
-        self.boton_reiniciar.pack(side=tk.RIGHT, padx=5, pady=5)
-        self.boton_ayuda=tk.Button(self.left_bottom, text="Ayuda", command=self.ayuda, width=20,height=5)
-        self.boton_ayuda.pack(side=tk.RIGHT, padx=5, pady=5)
-        self.boton_responder = tk.Button(self.left_bottom, text="Responder", command=self.on_responder, width=20,height=5)
-        self.boton_responder.pack(side=tk.RIGHT, padx=5, pady=5)
-        #root.after(100, lambda: messagebox.showinfo("Bienvenido", "Hola! bienvenido a la app. Responda a las preguntas del cuadro de texto presionando enter o pulsando la tecla Responder. \nEn la gráfica superior se mostrará el problema que está describiendo junto con los ejes y ángulos de referencia en los que debe apoyarse. \nPara observar las gráficas de esfuerzos, momentos, etc, se deben dar valores a las incógnitas que el programa solicite y se debe especificar la gráfica deseada entre las posibles opciones que se indican.\nEs muy importante que haga caso a las indicaciones que aparecen en las preguntas antes de responderlas (aparecen entre paréntesis). Por ejemplo, la primera pregunta solo tiene como posibles respuestas portico o barras simples, lo que quiere decir que solo puede responder una de esas dos opciones, no otra diferente.\nDicho esto,¡a calcular!"))
+        self.chart.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self.forzar_tamaño()
+        # Al final de tu __init__, después de crear todos los widgets y canvases
+    def forzar_tamaño(self):
+        self.root.update_idletasks()  # asegura que Tkinter haya calculado tamaños
+        #self.root.after(100, self.root.geometry("1200x800"))  # fuerza tamaño exacto
     def on_scroll(self, event):
         # Solo si el cursor está dentro de los ejes
         if event.inaxes != self.ax_canvas:
@@ -174,7 +192,6 @@ class VigaSolverApp:
 
         self.last_event = event
         self.canvas_top.draw_idle()
-
     def ayuda(self):
         self.root.after(100, lambda: messagebox.showinfo("Ayuda",
                                                     "Hola! bienvenido a la BeamApp. Responda a las preguntas del cuadro de texto presionando enter o pulsando la tecla Responder. \nEn la gráfica superior se mostrará el problema que está describiendo junto con los ejes y ángulos de referencia en los que debe apoyarse. Si lo necesita, puede hacer zoom con el Mouse Wheel para visualizar mejor el dibujo. \nPara observar las gráficas de esfuerzos, momentos, etc, se deben dar valores a las incógnitas que el programa solicite y se debe especificar la gráfica deseada entre las posibles opciones que se indican. \nEs muy importante que haga caso a las indicaciones que aparecen en las preguntas antes de responderlas (aparecen entre paréntesis). Por ejemplo, la primera pregunta solo tiene como posibles respuestas portico o barras simples, lo que quiere decir que solo puede responder una de esas dos opciones, no otra diferente.\nRespecto a las variables que aparecen...\nEI:producto del módulo elástico por la inercia\nEA:producto del módulo elástico por el área de la sección\nL:longitud\nVz1:esfuerzo cortante a lo largo de la barra 1\nN1:esfuerzo axial a lo largo de la barra 1\nMy1:momento a lo largo de la barra 1\ntheta1:giro perpendicular al plano a lo largo de la barra1\nw1:desplazamiento cortante a lo largo de la barra 1\nU1:desplazamientos axiales a lo largo de la barra 1\nDicho esto ¡a calcular!"))
@@ -218,7 +235,14 @@ class VigaSolverApp:
         self.crear_variables()
         self.ax_canvas.cla()
         self.ax_graficas.clear()
+        self.ax_graficas.set_title("Gráfica de resultados\n", fontsize=9)  # reponer título
+        self.chart.draw_idle()  # actualiza el canvas
         self.ax_canvas.grid(True)
+        self.ax_canvas.set_xlim(-0.5, 3.5)
+        self.ax_canvas.set_ylim(-0.5, 3.5)
+        self.ax_canvas.set_autoscale_on(False)
+        self.ax_canvas.set_aspect('equal', adjustable='box')
+        self.ax_canvas.set_title("Problema a resolver\n", fontsize=9)
         self.canvas_top.draw()
         self.solution_text.config(state=tk.NORMAL)
         self.solution_text.delete("1.0", tk.END)
@@ -524,10 +548,10 @@ class VigaSolverApp:
                 if self.incognita == list(self.valores.keys())[-1]:
                     self.i = 0
                     self.incognita = list(self.L_val)[self.i]
-                    self.pregunta_actual = f"Ingrese el valores numérico para {self.incognita}:"
+                    self.pregunta_actual = f"Ingrese el valor numérico para {self.incognita}:"
                 else:
                     self.incognita = list(self.valores.keys())[self.i]
-                    self.pregunta_actual = f"Ingrese el valores numérico para {self.incognita}:"
+                    self.pregunta_actual = f"Ingrese el valor numérico para {self.incognita}:"
             else:
                 self.L_val[self.incognita] = self.respuesta
                 if self.incognita == list(self.L_val.keys())[-1]:
