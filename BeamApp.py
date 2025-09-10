@@ -358,7 +358,7 @@ class VigaSolverApp:
                     Dibujar(self.figure_canvas, self.ax_canvas,self.respuestas_apoyos,self.respuesta_angulos,self.respuesta_tipo_de_problema).barras()
                     self.canvas_top.draw()
                     self.mostrar_pregunta(self.respuesta,
-                                          "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
+                                          "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*x/L,q*(x^2)/(L^2)...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
                     self.respuesta = ""
                     for i in range(0, int(self.respuestas_tramos[0])):
                         if self.respuesta_tipo_de_problema=="barras simples":
@@ -406,7 +406,7 @@ class VigaSolverApp:
                 self.pregunta_actual = self.posicion_apoyos[self.indice_tramos_moviles]
             else:
                 self.mostrar_pregunta(self.respuesta,
-                                      "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
+                                      "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*x/L,q*(x^2)/(L^2)...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
                 self.respuesta = ""
                 for i in range(0, int(self.respuestas_tramos[0])):
                     if self.respuesta_tipo_de_problema == "barras simples":
@@ -559,11 +559,11 @@ class VigaSolverApp:
 
                 else:
                     self.incognita = list(self.L_val.keys())[self.i]
-                    self.pregunta_actual = f"Ingrese el valores numérico para {self.incognita}:"
+                    self.pregunta_actual = f"Ingrese el valor numérico para {self.incognita}:"
         self.n_entry.delete(0, tk.END)  # Borra desde el primer carácter hasta el final
         self.n_entry.focus_set()#Hace que el cursor vuelva al campo de entrada (self.entry), listo para que el usuario escriba sin tener que hacer clic.
         self.mostrar_pregunta(self.respuesta, self.pregunta_actual)
-        if self.pregunta_actual==f"Ingrese el valores numérico para {self.incognita}:":
+        if self.pregunta_actual==f"Ingrese el valor numérico para {self.incognita}:":
             self.pregunta_actual="valores"
     def mostrar_pregunta(self,respuesta,pregunta):
         self.solution_text.config(state=tk.NORMAL)
@@ -838,7 +838,7 @@ class VigaSolverApp:
         #print(self.items)
         #print(self.incognita)
         #print(self.L_val)
-        self.mostrar_pregunta("", f"Ingrese el valores numérico para {self.incognita}:")
+        self.mostrar_pregunta("", f"Ingrese el valor numérico para {self.incognita}:")
 
     def graficas(self):
         todaslaslineas=[]
