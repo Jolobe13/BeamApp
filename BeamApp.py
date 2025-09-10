@@ -8,11 +8,8 @@ import matplotlib.pyplot as plt
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from graficasdraw import Dibujar
-import math
-import sympy as sp
-from calculosmatlab2 import Calculadora
-from sympy import symbols, Symbol, simplify, integrate, diff, sin, solve, sympify, tan, cos, pretty, N,lambdify, pi, \
-    linsolve
+
+from sympy import symbols, Symbol, simplify, integrate, diff, sin, solve, sympify, tan, cos, pretty, N,lambdify, pi
 import numpy as np
 from sympy.parsing.sympy_parser import parse_expr
 class VigaSolverApp:
@@ -87,7 +84,7 @@ class VigaSolverApp:
         self.chart = FigureCanvasTkAgg(self.figure_graficas, self.right_bottom)
         self.chart.get_tk_widget().pack(ipady=10)
 
-        # Sección de texto de soluciones
+        # Sección de texto
         ttk.Label(self.left, text="BeamApp", font=("Segoe UI", 14, "bold")).pack()
         self.solution_text = ScrolledText(self.left, wrap=tk.WORD, height=25, font=("Courier New", 10))
         self.solution_text.pack(fill=tk.BOTH, expand=True)
@@ -337,7 +334,7 @@ class VigaSolverApp:
                     Dibujar(self.figure_canvas, self.ax_canvas,self.respuestas_apoyos,self.respuesta_angulos,self.respuesta_tipo_de_problema).barras()
                     self.canvas_top.draw()
                     self.mostrar_pregunta(self.respuesta,
-                                          "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras...(escriba 0 si la barra no esta sometida a ninguna carga repartida)")
+                                          "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
                     self.respuesta = ""
                     for i in range(0, int(self.respuestas_tramos[0])):
                         if self.respuesta_tipo_de_problema=="barras simples":
@@ -385,7 +382,7 @@ class VigaSolverApp:
                 self.pregunta_actual = self.posicion_apoyos[self.indice_tramos_moviles]
             else:
                 self.mostrar_pregunta(self.respuesta,
-                                      "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras...(escriba 0 si la barra no esta sometida a ninguna carga repartida)")
+                                      "Indique las componentes axiales y cortantes de las cargas repartidas a las que estan sometidas las diferentes barras. \nEjemplos:\n  q,q1,q2,q3...\n  q*sin(alpha),q*cos(alpha1),q*sin(alpha2)...\n  q*cos(beta),q*sin(beta1),q*cos(beta2)...\n  0")
                 self.respuesta = ""
                 for i in range(0, int(self.respuestas_tramos[0])):
                     if self.respuesta_tipo_de_problema == "barras simples":
@@ -437,6 +434,9 @@ class VigaSolverApp:
         elif self.pregunta_actual==self.tipos_cargas_puntuales[0]:
             self.respuestas_cargas_puntuales.append(self.respuesta)
             if self.respuestas_cargas_puntuales[0]=="si":
+                self.mostrar_pregunta(self.respuesta,
+                                      "Indique las componentes axiales y cortantes de las cargas puntuales a las que estan sometidas los diferentes apoyos. \nEjemplos:\n  Q,Q1,Q2,Q3...\n  Q*sin(alpha),Q*cos(alpha1),Q*sin(alpha2)...\n  Q*cos(beta),Q*sin(beta1),Q*cos(beta2)...\n  0")
+                self.respuesta = ""
                 if self.respuesta_tipo_de_problema=="portico":
                     for i in range(0, int(self.respuestas_tramos[0])):
                         if self.respuesta_angulos[i]=="90":
@@ -454,9 +454,9 @@ class VigaSolverApp:
                                 f"Ingrese componente axial (respecto eje axial3) de la carga puntual en el apoyo {i + 1}:")
                     if self.respuesta_angulos[-1] == "0":
                         self.tipos_cargas_puntuales.append(
-                            f"Ingrese componente cortante (respecto eje Cortante2) de la carga puntual en el apoyo {i + 1}:")
+                            f"Ingrese componente cortante (respecto eje Cortante2) de la carga puntual en el apoyo {int(self.respuestas_tramos[0] + 1)}:")
                         self.tipos_cargas_puntuales.append(
-                            f"Ingrese componente axial (respecto eje axial2) de la carga puntual en el apoyo {i + 1}:")
+                            f"Ingrese componente axial (respecto eje axial2) de la carga puntual en el apoyo {int(self.respuestas_tramos[0] + 1)}:")
                     elif self.respuesta_angulos[-1] == "270":
                         self.tipos_cargas_puntuales.append(
                             f"Ingrese componente cortante (respecto eje Cortante3) de la carga puntual en el apoyo {int(self.respuestas_tramos[0]) + 1}:")
